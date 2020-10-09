@@ -26,7 +26,7 @@ struct StripeController:RouteCollection {
 
     func payout(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
         let charge = try req.content.decode(ChargeToken.self)
-        return req.stripe.payouts.create(amount: 2500, currency: .usd).map { payout in
+        return req.stripe.payouts.create(amount: 2500, currency: .usd, method: .instant).map { payout in
             if payout.status == .paid {
                 return .ok
             } else if payout.status == .failed {
