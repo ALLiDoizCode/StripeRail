@@ -10,6 +10,7 @@ struct StripeController:RouteCollection {
 
     func boot(routes: RoutesBuilder) throws {
         routes.post("chargeCustomer", use: chargeCustomer)
+        routes.post("payout", use: payout)
     }
 
     func chargeCustomer(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
@@ -25,8 +26,21 @@ struct StripeController:RouteCollection {
     }
 
     func payout(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let charge = try req.content.decode(ChargeToken.self)
-        return req.stripe.payouts.create(amount: 2500, currency: .usd, method: .instant).map { payout in
+        let payout = try req.content.decode(StripePayout.self)
+
+        guard let amount = payout.amount else {
+            throw Abort(.badRequest)
+        }
+
+        guard let currency = payout.currency else {
+            throw Abort(.badRequest)
+        }
+
+        guard let method = payout.method else {
+            throw Abort(.badRequest)
+        }
+
+        return req.stripe.payouts.create(amount: amount, currency: currency, method: method).map { payout in
             if payout.status == .paid {
                 return .ok
             } else if payout.status == .failed {
