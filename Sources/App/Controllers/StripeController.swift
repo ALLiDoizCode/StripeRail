@@ -8,9 +8,14 @@ struct StripeController:RouteCollection {
         var token: String
     }
 
+    struct Link:Content {
+        let url:String?
+    }
+
     func boot(routes: RoutesBuilder) throws {
         routes.post("chargeCustomer", use: chargeCustomer)
         routes.post("payout", use: payout)
+        routes.post("accountLink", use: accountLink)
     }
 
     func chargeCustomer(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
@@ -50,6 +55,15 @@ struct StripeController:RouteCollection {
                 print("Stripe payout status: \(String(describing:payout.status?.rawValue))")
                 return .ok
             }
+        }
+    }
+
+    func accountLink(_ req: Request) throws -> EventLoopFuture<Link> {
+        return req.stripe.accountLinks.create(account: "String", refreshUrl: "String", returnUrl: "String", type: .accountOnboarding,collect:nil).map { link in
+
+            let url = Link(url:link.url)
+
+            return url
         }
     }
 }
